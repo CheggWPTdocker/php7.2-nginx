@@ -49,7 +49,7 @@ RUN echo INSTALL PHPIREDIS PHP MODULE && \
 	cd phpiredis-${phpiredis_version} && \
 	phpize && ./configure --enable-phpiredis && \
 	make && make install && \
-	cd /tmp && rm -rf phpredis-${phpiredis_version} phpredis-${phpiredis_version}.zip
+	cd /tmp && rm -rf phpiredis-${phpiredis_version} phpiredis-${phpiredis_version}.zip
 
 # Install tideways
 ENV tideways_version=1.5.3 \
