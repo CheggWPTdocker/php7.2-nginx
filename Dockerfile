@@ -27,51 +27,52 @@ RUN cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && \
 	mv /etc/profile.d/color_prompt /etc/profile.d/color_prompt.sh && \
 	echo alias dir=\'ls -alh --color\' >> /etc/profile && \
 	echo 'source ~/.profile' >> /etc/profile && \
+	echo 'cat /etc/os-release' >> ~/.profile && \
 	mkdir -p /app /run/nginx && \
 	chown -R nginx:www-data /run/nginx && \
 	chown -R :www-data /app && \
 	chmod -R g+rw /app
 
+# Install known pacakages with docker-php-ext-install, install others with pecl install
 RUN docker-php-ext-install -j$(nproc) bcmath bz2 gd gettext gmp intl mysqli \
-	pdo_dblib pdo_mysql pdo_pgsql soap tidy xmlrpc opcache zip
-
-# pecl installs for apcu memcached and mcrypt
-RUN pecl install apcu && \
+	pdo_dblib pdo_mysql pdo_pgsql soap tidy xmlrpc opcache zip && \
+	pecl install apcu && \
 	pecl install memcached && \
 	pecl install mcrypt channel://pecl.php.net/mcrypt-1.0.1
 
 # Install phpiredis
-RUN git clone https://github.com/nrk/phpiredis.git && \
-	cd phpiredis && \
+ENV phpiredis_version=1.0.0
+RUN echo INSTALL PHPIREDIS PHP MODULE && \
+	curl -L "https://github.com/nrk/phpiredis/archive/v${phpiredis_version}.zip" \
+	--output "/tmp/phpiredis-${phpiredis_version}.zip" && \
+	cd /tmp && unzip "/tmp/phpiredis-${phpiredis_version}.zip" && \
+	cd phpiredis-${phpiredis_version} && \
 	phpize && ./configure --enable-phpiredis && \
-	make && make install
+	make && make install && \
+	cd /tmp && rm -rf phpredis-${phpiredis_version} phpredis-${phpiredis_version}.zip
 
-# Tideways ENVs
+# Install tideways
 ENV tideways_version=1.5.3 \
 	tideways_ext_version=4.1.5 \
 	tideways_php_version=2.0.16 \
 	tideways_dl=https://github.com/tideways/
-
-# Install tideways module
-RUN cd /tmp && \
+RUN echo INSTALL TIDEWAYS PHP MODULE && \
 	curl -L "${tideways_dl}/php-profiler-extension/archive/v${tideways_ext_version}.zip" \
 	--output "/tmp/v${tideways_ext_version}.zip" && \
 	cd /tmp && unzip "v${tideways_ext_version}.zip" && \
 	cd "php-xhprof-extension-${tideways_ext_version}" && \
 	phpize && \
 	./configure && \
-	make && make install
-
-# install tideways profiler
-RUN curl -L "${tideways_dl}/profiler/releases/download/v${tideways_php_version}/Tideways.php" \
+	make && make install && \
+	cd /tmp && rm -rf php-xhprof-extension-${tideways_ext_version}/ v${tideways_ext_version}.zip && \
+echo INSTALL TIDEWAYS PROFILER && \
+	curl -L "${tideways_dl}/profiler/releases/download/v${tideways_php_version}/Tideways.php" \
 	--output "$(php-config --extension-dir)/Tideways.php" && \
 	ls -l "$(php-config --extension-dir)/Tideways.php" && \
-	cd /tmp && rm -rf php-xhprof-extension-${tideways_ext_version}/ v${tideways_ext_version}.zip
-
-# install tideways daemon
-RUN cd /tmp && \
-	wget https://s3-eu-west-1.amazonaws.com/tideways/daemon/${tideways_version}/tideways-daemon-v${tideways_version}-alpine.tar.gz && \
-	tar -zxf tideways-daemon-v${tideways_version}-alpine.tar.gz && \
+echo INSTALL TIDEWAYS DAEMON && \
+	curl -L "https://s3-eu-west-1.amazonaws.com/tideways/daemon/${tideways_version}/tideways-daemon-v${tideways_version}-alpine.tar.gz" \
+	--output "/tmp/tideways-daemon-v${tideways_version}-alpine.tar.gz" && \
+	cd /tmp && tar -zxf tideways-daemon-v${tideways_version}-alpine.tar.gz && \
 	mv build/dist/tideways-daemon /usr/bin && \
 	ls -l /usr/bin/tideways-daemon && \
 	mkdir -p /var/run/tideways && \
@@ -80,9 +81,10 @@ RUN cd /tmp && \
 # enable the above
 RUN docker-php-ext-enable apcu memcached mcrypt phpiredis tideways
 
-# install nginx
+# clean up apk
 RUN apk del .build_deps && \
-	apk del .build_package
+	apk del .build_package && \
+	rm -rf /var/cache/apk/*
 
 RUN php -m && \
 	php -v
