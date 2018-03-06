@@ -35,7 +35,7 @@ RUN cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && \
 
 # Install known pacakages with docker-php-ext-install, install others with pecl install
 RUN docker-php-ext-install -j$(nproc) bcmath bz2 gd gettext gmp intl mysqli \
-	pdo_dblib pdo_mysql pdo_pgsql soap tidy xmlrpc opcache zip && \
+	pdo_dblib pdo_mysql session soap tidy opcache zip && \
 	pecl install apcu && \
 	pecl install memcached && \
 	pecl install mcrypt channel://pecl.php.net/mcrypt-1.0.1
@@ -81,10 +81,31 @@ echo INSTALL TIDEWAYS DAEMON && \
 # enable the above
 RUN docker-php-ext-enable apcu memcached mcrypt phpiredis tideways
 
+# Add the process control directories for PHP
+# make it user/group read write
+RUN mkdir -p /run/php && \
+	chown -R www-data:www-data /run/php
+
+# Report on PHP build
+RUN php -m && \
+	php -v
+
 # clean up apk
 RUN apk del .build_deps && \
 	apk del .build_package && \
 	rm -rf /var/cache/apk/*
 
-RUN php -m && \
-	php -v
+# Add the config files
+COPY container_confs /
+RUN chmod a+x /entrypoint.sh /wait-for-it.sh /start_tideways.sh
+
+WORKDIR /app
+
+# Expose the ports for nginx
+EXPOSE 80 443
+
+# the entry point definition
+ENTRYPOINT ["/entrypoint.sh"]
+
+# default command for entrypoint.sh
+CMD ["supervisor"]
