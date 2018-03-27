@@ -92,7 +92,6 @@ RUN php -m && \
 
 # clean up apk
 RUN apk del .build_deps && \
-	apk del .build_package && \
 	rm -rf /var/cache/apk/*
 
 # Add the config files

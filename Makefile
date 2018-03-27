@@ -3,7 +3,7 @@
 ORG = cheggwpt
 NAME = php7.2-nginx
 IMAGE = $(ORG)/$(NAME)
-VERSION = 0.0.1
+VERSION = 0.0.2
 PORT_INTERNAL = 80
 PORT_EXTERNAL = 8080
 
