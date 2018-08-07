@@ -41,8 +41,7 @@ RUN docker-php-ext-install -j$(nproc) bcmath bz2 gd gettext gmp intl mysqli \
 	pecl install mcrypt channel://pecl.php.net/mcrypt-1.0.1
 
 # Install phpiredis
-ARG phpiredis_version
-ENV phpiredis_version=${phpiredis_version:1.0.0}
+ENV phpiredis_version=1.0.0
 RUN echo INSTALL PHPIREDIS PHP MODULE && \
 	curl -L "https://github.com/nrk/phpiredis/archive/v${phpiredis_version}.zip" \
 	--output "/tmp/phpiredis-${phpiredis_version}.zip" && \
@@ -52,8 +51,7 @@ RUN echo INSTALL PHPIREDIS PHP MODULE && \
 	make && make install && \
 	cd /tmp && rm -rf phpiredis-${phpiredis_version} phpiredis-${phpiredis_version}.zip
 
-ARG phpredis_version
-ENV phpredis_version=${phpredis_version:4.0.0}
+ENV phpredis_version=4.0.0
 RUN echo INSTALL PHPREDIS PHP MODULE && \
 	git clone --branch ${phpredis_version} --depth 1 https://github.com/phpredis/phpredis.git /tmp/phpredis && \
 	cd /tmp/phpredis && \
@@ -89,7 +87,7 @@ echo INSTALL TIDEWAYS DAEMON && \
 	cd /tmp && rm -rf build/ tideways-daemon-v${tideways_version}-alpine.tar.gz
 
 # enable the above
-RUN docker-php-ext-enable apcu memcached mcrypt phpiredis tideways
+RUN docker-php-ext-enable apcu memcached mcrypt phpiredis tideways redis
 
 # Add the process control directories for PHP
 # make it user/group read write
