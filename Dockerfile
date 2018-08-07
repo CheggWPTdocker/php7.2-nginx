@@ -41,7 +41,8 @@ RUN docker-php-ext-install -j$(nproc) bcmath bz2 gd gettext gmp intl mysqli \
 	pecl install mcrypt channel://pecl.php.net/mcrypt-1.0.1
 
 # Install phpiredis
-ENV phpiredis_version=1.0.0
+ARG phpiredis_version
+ENV phpiredis_version=${phpiredis_version:1.0.0}
 RUN echo INSTALL PHPIREDIS PHP MODULE && \
 	curl -L "https://github.com/nrk/phpiredis/archive/v${phpiredis_version}.zip" \
 	--output "/tmp/phpiredis-${phpiredis_version}.zip" && \
@@ -50,6 +51,15 @@ RUN echo INSTALL PHPIREDIS PHP MODULE && \
 	phpize && ./configure --enable-phpiredis && \
 	make && make install && \
 	cd /tmp && rm -rf phpiredis-${phpiredis_version} phpiredis-${phpiredis_version}.zip
+
+ARG phpredis_version
+ENV phpredis_version=${phpredis_version:4.0.0}
+RUN echo INSTALL PHPREDIS PHP MODULE && \
+	git clone --branch ${phpredis_version} --depth 1 https://github.com/phpredis/phpredis.git /tmp/phpredis && \
+	cd /tmp/phpredis && \
+	phpize && ./configure && make && make install && \
+	echo "extension=redis.so" > "$(php-config --extension-dir)/source-php-ext-phpredis.ini" && \
+	cd && rm -rf /tmp/phpredis
 
 # Install tideways
 ENV tideways_version=1.5.3 \
