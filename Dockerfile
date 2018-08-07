@@ -51,6 +51,14 @@ RUN echo INSTALL PHPIREDIS PHP MODULE && \
 	make && make install && \
 	cd /tmp && rm -rf phpiredis-${phpiredis_version} phpiredis-${phpiredis_version}.zip
 
+ENV phpredis_version=4.0.0
+RUN echo INSTALL PHPREDIS PHP MODULE && \
+	git clone --branch ${phpredis_version} --depth 1 https://github.com/phpredis/phpredis.git /tmp/phpredis && \
+	cd /tmp/phpredis && \
+	phpize && ./configure && make && make install && \
+	echo "extension=redis.so" > "$(php-config --extension-dir)/source-php-ext-phpredis.ini" && \
+	cd && rm -rf /tmp/phpredis
+
 # Install tideways
 ENV tideways_version=1.5.3 \
 	tideways_ext_version=4.1.5 \
@@ -79,7 +87,7 @@ echo INSTALL TIDEWAYS DAEMON && \
 	cd /tmp && rm -rf build/ tideways-daemon-v${tideways_version}-alpine.tar.gz
 
 # enable the above
-RUN docker-php-ext-enable apcu memcached mcrypt phpiredis tideways
+RUN docker-php-ext-enable apcu memcached mcrypt phpiredis tideways redis
 
 # Add the process control directories for PHP
 # make it user/group read write
